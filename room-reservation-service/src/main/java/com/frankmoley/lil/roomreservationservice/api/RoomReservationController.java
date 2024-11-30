@@ -31,7 +31,7 @@ public class RoomReservationController {
     }
 
     @GetMapping
-    public Collection<RoomReservation> getRoomReservations(@RequestParam(value = "date", required = false) String dateString) {
+    public Collection<RoomReservation> getRoomReservations(@RequestParam( required = false) String dateString) {
         if (!StringUtils.hasLength(dateString)) {
             Date date = new Date(System.currentTimeMillis());
             DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
@@ -51,7 +51,7 @@ public class RoomReservationController {
             roomReservation.setDate(usableDateString);
             roomReservations.put(room.getRoomId(), roomReservation);
         });
-        List<Reservation> reservations = this.reservationServiceClient.getAll(usableDateString, null);
+        List<Reservation> reservations = this.reservationServiceClient.getAll(null, usableDateString);
         reservations.forEach(reservation -> {
             RoomReservation roomReservation = roomReservations.get(reservation.getRoomId());
             roomReservation.setReservationId(reservation.getReservationId());

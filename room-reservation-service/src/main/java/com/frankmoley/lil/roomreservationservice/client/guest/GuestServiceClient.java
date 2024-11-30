@@ -1,53 +1,32 @@
 package com.frankmoley.lil.roomreservationservice.client.guest;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.Arrays;
 import java.util.List;
 
-@Service
-public class GuestServiceClient {
-    private final RestTemplate restTemplate;
+//@Service
+@FeignClient("guest-service")
+public interface GuestServiceClient {
 
-    @Value("${GUEST_SERVICE_URL}")
-    private String guestServiceUrl;
+    @GetMapping("/guests")
+    public List<Guest> getAll();
 
-    private final static String GUESTS_URL_PART = "/guests";
-    private final static String SLASH = "/";
+    @PostMapping("/guests")
+    public Guest addGuest(@RequestBody Guest guest);
 
-    public GuestServiceClient(RestTemplate restTemplate) {
-        this.restTemplate = restTemplate;
-    }
+    @GetMapping("/guests/{id}")
+    public Guest getGuest(@PathVariable("id") long id);
 
-    public List<Guest> getAll() {
-        String url = guestServiceUrl + GUESTS_URL_PART;
-        ResponseEntity<Guest[]> response = this.restTemplate.getForEntity(url, Guest[].class);
-        return Arrays.asList(response.getBody());
-    }
+    @PutMapping("/guests/{id}")
+    public void updateGuest(@PathVariable("id") long id ,@RequestBody Guest guest);
 
-    public Guest addGuest(Guest guest) {
-        String url = guestServiceUrl + GUESTS_URL_PART;
-        ResponseEntity<Guest> response = this.restTemplate.postForEntity(url, guest, Guest.class);
-        return response.getBody();
-    }
-
-    public Guest getGuest(long id) {
-        String url = guestServiceUrl + GUESTS_URL_PART + SLASH + id;
-        ResponseEntity<Guest> response = this.restTemplate.getForEntity(url, Guest.class);
-        return response.getBody();
-    }
-
-    public void updateGuest(Guest guest) {
-        String url = guestServiceUrl + GUESTS_URL_PART + SLASH + guest.getGuestId();
-        this.restTemplate.put(url, guest);
-    }
-
-    public void deleteGuest(long id) {
-        String url = guestServiceUrl + GUESTS_URL_PART + SLASH + id;
-        this.restTemplate.delete(url);
-    }
+    @DeleteMapping("/guests/{id}")
+    public void deleteGuest(@PathVariable("id") long id);
 
 }

@@ -74,10 +74,10 @@ public class ReservationController {
     @GetMapping("/{id}")
     public Reservation getReservation(@PathVariable("id") long id) {
         Optional<ReservationEntity> entity = this.reservationRepository.findById(id);
-        if (entity.isEmpty()) {
-            throw new NotFoundException("id not found " + id);
+        if (entity.isPresent()) {
+            return new Reservation(entity.get());
         }
-        return new Reservation(entity.get());
+        throw new NotFoundException("id not found " + id);
     }
 
     @PutMapping("/{id}")
