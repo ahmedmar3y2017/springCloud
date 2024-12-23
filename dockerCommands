@@ -1,0 +1,38 @@
+
+
+   2 docker build .
+   6 docker run --name os-app f6d914b8d132
+   7 docker ps
+   8 docker ps -a
+   9 docker rm f6d914b8d132
+  10 docker rm os-app
+  11 docker images
+  12 docker rmi f6d914b8d132
+  13 docker images
+
+
+
+  -- -----------
+   2 javac -cp .\lombok-1.18.36.jar .\test.java
+   4 docker build -t testimg .
+   5 docker images
+   6 docker build -t testimg .
+   7 docker images
+   8 docker run --name testimgCont testimg
+
+-- run in backgroud
+ docker run -detach --name testimgnewCont1 testimgnew
+
+
+ docker logs 035f2dd72474
+
+
+-- docker log
+ 19 docker logs 035f2dd72474
+  20 docker exec -t -i  docker logs 241cdf8875b2b44c7e7ad3c8a7ee8ec1bb205b3c8836913932b3538f9dbb0117
+  23 docker exec -t -i  035f2dd72474 ls /example
+  -- enter machine
+  25 docker exec -t -i  241cdf8875b2b44c7e7ad3c8a7ee8ec1bb205b3c8836913932b3538f9dbb0117  /bin/sh
+
+-- remove all images & containers
+docker system prune -a

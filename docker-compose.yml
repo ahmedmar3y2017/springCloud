@@ -1,0 +1,72 @@
+version: '1'
+services:
+  eureka-server:
+    container_name: eureka-server
+    image: eureka-server:0.0.1-SNAPSHOT
+    ports:
+      - 8761:8761
+#    networks:
+#      - spring-cloud-network
+
+  config-server:
+    container_name: config-server
+    image: config-server:0.0.1-SNAPSHOT
+    ports:
+      - 8088:8088
+  #    networks:
+  #      - spring-cloud-network
+
+  guest-service:
+    container_name: guest-service
+    image: guest-service:0.0.1-SNAPSHOT
+    environment:
+      - eureka.client.service-url.defaultZone = http://eureka-server:8761/eureka
+
+    ports:
+      - 9091:9091
+    #    networks:
+    #      - spring-cloud-network
+    depends_on:
+      - eureka-server
+  room-service:
+    container_name: room-service
+    image: room-service:0.0.1-SNAPSHOT
+    environment:
+      - eureka.client.service-url.defaultZone = http://eureka-server:8761/eureka
+
+    ports:
+      - 9093:9093
+    #    networks:
+    #      - spring-cloud-network
+    depends_on:
+      - eureka-server
+
+  reservation-service:
+    container_name: reservation-service
+    image: reservation-service:0.0.1-SNAPSHOT
+    environment:
+      - eureka.client.service-url.defaultZone = http://eureka-server:8761/eureka
+
+    ports:
+      - 9092:9092
+    #    networks:
+    #      - spring-cloud-network
+    depends_on:
+      - eureka-server
+
+  room-reservation-service:
+    container_name: room-reservation-service
+    image: room-reservation-service:0.0.1-SNAPSHOT
+    environment:
+      - eureka.client.service-url.defaultZone = http://eureka-server:8761/eureka
+
+    ports:
+      - 9090:9090
+    #    networks:
+    #      - spring-cloud-network
+    depends_on:
+      - eureka-server
+
+#networks:
+#  spring-cloud-network:
+#    driver: bridge
