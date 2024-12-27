@@ -1,0 +1,9 @@
+-- for puskk image and run kafka in single nood on docker
+docker-compose -f kafka-single-node.yml -p commands up -d
+
+
+
+
+
+
+
