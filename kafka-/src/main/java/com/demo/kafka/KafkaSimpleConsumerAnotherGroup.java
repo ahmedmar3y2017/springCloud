@@ -9,7 +9,7 @@ import java.time.Duration;
 import java.util.Arrays;
 import java.util.Properties;
 
-public class KafkaSimpleConsumer {
+public class KafkaSimpleConsumerAnotherGroup {
 
     public static void main(String[] args) {
 
@@ -30,7 +30,7 @@ public class KafkaSimpleConsumer {
 
         //Consumer Group ID for this consumer
         kafkaProps.put(ConsumerConfig.GROUP_ID_CONFIG,
-                "kafka-java-consumer");
+                "kafka-java-consumer-another");
 
         //Set to consume from the earliest message, on start when no offset is
         //available in Kafka

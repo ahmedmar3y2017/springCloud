@@ -1,4 +1,4 @@
-package com.demo.kafka;
+package com.demo.kafka.cluster;
 
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
@@ -18,7 +18,7 @@ public class KafkaSimpleConsumer {
 
         //List of Kafka brokers to connect to
         kafkaProps.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG,
-                "localhost:9092");
+                "localhost:9092,localhost:9093,localhost:9094");
 
         //Deserializer class to convert Keys from Byte Array to String
         kafkaProps.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG,

@@ -1,5 +1,6 @@
-package com.demo.kafka;
+package com.demo.kafka.cluster;
 
+import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
@@ -15,8 +16,8 @@ public class KafkaSimpleProducer {
         Properties kafkaProps = new Properties();
 
         //List of brokers to connect to
-        kafkaProps.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG,
-                "localhost:9092");
+        kafkaProps.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG,
+                "localhost:9092,localhost:9093,localhost:9094");
 
         //Serializer class used to convert Keys to Byte Arrays
         kafkaProps.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG,
