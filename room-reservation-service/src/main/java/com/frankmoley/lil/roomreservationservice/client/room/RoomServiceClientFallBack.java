@@ -22,6 +22,7 @@ public class RoomServiceClientFallBack implements RoomServiceClient{
         return null;
     }
 
+
     @Override
     public void updateRoom(long id, Room room) {
 

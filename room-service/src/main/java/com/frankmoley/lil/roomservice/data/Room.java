@@ -25,4 +25,7 @@ public class Room {
     private String roomNumber;
     @Column(name = "BED_INFO")
     private String bedInfo;
+    @Column(name = "COST")
+    private double cost;
+
 }

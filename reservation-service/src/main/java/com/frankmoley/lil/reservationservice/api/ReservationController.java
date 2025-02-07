@@ -7,6 +7,7 @@ import com.frankmoley.lil.reservationservice.error.NotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
@@ -56,6 +57,26 @@ public class ReservationController {
         }
         entities.forEach(entity -> reservations.add(new Reservation(entity)));
         return reservations;
+    }
+
+    @GetMapping("/available")
+    public ResponseEntity<Boolean> checkRoomAvailability(@RequestParam(value = "roomId", required = true) Long roomId,
+                                                         @RequestParam(value = "date", required = true) String dateString) {
+
+        if (StringUtils.hasLength(dateString) && roomId != null) {
+            try {
+                Date date = this.getDateFromString(dateString);
+                List<ReservationEntity> reservationEntitiesByDateAndRoomId = this.reservationRepository.findReservationEntitiesByDateAndRoomId(date, roomId);
+                if (reservationEntitiesByDateAndRoomId == null || reservationEntitiesByDateAndRoomId.isEmpty())
+                    return ResponseEntity.ok(true);
+            } catch (ParseException e) {
+                LOGGER.error("unable to translate date", e);
+                throw new BadReqeustException("unable to translate date string");
+            }
+        }
+
+        return ResponseEntity.ok(false);
+
     }
 
     @PostMapping

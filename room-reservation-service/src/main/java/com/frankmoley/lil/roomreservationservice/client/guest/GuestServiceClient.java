@@ -1,5 +1,6 @@
 package com.frankmoley.lil.roomreservationservice.client.guest;
 
+import com.frankmoley.lil.roomreservationservice.client.reservation.ReservationClientFallBack;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.http.ResponseEntity;
@@ -11,7 +12,7 @@ import java.util.Arrays;
 import java.util.List;
 
 //@Service
-@FeignClient("guest-service")
+@FeignClient(value = "guest-service" , fallback = GuestServiceClientFallBack.class)
 public interface GuestServiceClient {
 
     @GetMapping("/guests")
@@ -23,8 +24,11 @@ public interface GuestServiceClient {
     @GetMapping("/guests/{id}")
     public Guest getGuest(@PathVariable("id") long id);
 
+    @GetMapping("/guests/{email}")
+    public Guest getGuestByEmail(@PathVariable("email") String email);
+
     @PutMapping("/guests/{id}")
-    public void updateGuest(@PathVariable("id") long id ,@RequestBody Guest guest);
+    public void updateGuest(@PathVariable("id") long id, @RequestBody Guest guest);
 
     @DeleteMapping("/guests/{id}")
     public void deleteGuest(@PathVariable("id") long id);

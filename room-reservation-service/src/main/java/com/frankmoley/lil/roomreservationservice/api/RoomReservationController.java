@@ -6,11 +6,14 @@ import com.frankmoley.lil.roomreservationservice.client.reservation.Reservation;
 import com.frankmoley.lil.roomreservationservice.client.reservation.ReservationServiceClient;
 import com.frankmoley.lil.roomreservationservice.client.room.Room;
 import com.frankmoley.lil.roomreservationservice.client.room.RoomServiceClient;
+import com.frankmoley.lil.roomreservationservice.dto.RoomReservationDto;
+import com.frankmoley.lil.roomreservationservice.dto.RoomReservationEvent;
+import com.frankmoley.lil.roomreservationservice.error.BadReqeustException;
+import com.frankmoley.lil.roomreservationservice.error.NotFoundException;
+import org.springframework.http.ResponseEntity;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.util.StringUtils;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -23,15 +26,17 @@ public class RoomReservationController {
     private final GuestServiceClient guestServiceClient;
     private final ReservationServiceClient reservationServiceClient;
     private final RoomServiceClient roomServiceClient;
+    private final KafkaTemplate<String, RoomReservationEvent> roomReservationEventKafkaTemplate;
 
-    public RoomReservationController(GuestServiceClient guestServiceClient, ReservationServiceClient reservationServiceClient, RoomServiceClient roomServiceClient) {
+    public RoomReservationController(GuestServiceClient guestServiceClient, ReservationServiceClient reservationServiceClient, RoomServiceClient roomServiceClient, KafkaTemplate<String, RoomReservationEvent> roomReservationEventKafkaTemplate) {
         this.guestServiceClient = guestServiceClient;
         this.reservationServiceClient = reservationServiceClient;
         this.roomServiceClient = roomServiceClient;
+        this.roomReservationEventKafkaTemplate = roomReservationEventKafkaTemplate;
     }
 
     @GetMapping
-    public Collection<RoomReservation> getRoomReservations(@RequestParam( required = false) String dateString) {
+    public Collection<RoomReservation> getRoomReservations(@RequestParam(required = false) String dateString) {
         if (!StringUtils.hasLength(dateString)) {
             Date date = new Date(System.currentTimeMillis());
             DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
@@ -62,4 +67,92 @@ public class RoomReservationController {
         });
         return roomReservations.values();
     }
+
+    // add new reservation
+    // {
+    // create reservation Api
+    // 1 - check guest exists or Not
+    // 2 - if not exists : return error
+    // room not available , update reservation failed
+    // room available , update reservation success -> update DB -> send message reservation_Created
+    // create reservation_reversed -> DB update reservation status failed
+    // 5 - listen to message reservation_Created
+    // payment - > create payment -> update status : success
+    // if failed -> update status -> send message to payment_reversed
+    // create payment_reversed consumer for set status failed
+    // }
+
+
+    @PostMapping
+    public void addRoomReservation(
+            @RequestBody RoomReservationDto roomReservationDto
+    ) {
+        RoomReservationEvent roomReservationEvent = new RoomReservationEvent();
+        /*
+         * Reservation Dto
+         *
+         *
+         * */
+
+        // status { succes , failed }
+        // payment table -> ID , reservationID , Mode , amount , status
+        // handle get guest fallback in guest service
+        // handle add guest fallback in guest service
+        // handle checkRoomAvailability fallback in room service
+        // handle flyway migration for other services except (guest , payment)
+
+        // checek guest exists or Not
+        String emailAddress = roomReservationDto.getEmail_address();
+        Guest guestByEmail = guestServiceClient.getGuestByEmail(emailAddress);
+        if (guestByEmail == null) {
+            Guest guest = new Guest();
+            guest.setEmailAddress(roomReservationDto.getEmail_address());
+            guest.setState("EG");
+            guest.setFirstName(roomReservationDto.getFirstName());
+            guest.setLastName(roomReservationDto.getLastName());
+            guest.setPhoneNumber(roomReservationDto.getPhone());
+            // create new Guest
+            guestByEmail = guestServiceClient.addGuest(guest);
+            roomReservationDto.setGuestId(guestByEmail.getGuestId());
+        }
+        // check room available in that date or Not
+        Room room = roomServiceClient.getRoom(roomReservationDto.getRoomNumber());
+        Boolean roomAvailable = true;
+        if (room == null) {
+
+            // room Not Found
+            throw new NotFoundException("Room Not Found ");
+
+        } else {
+            roomReservationDto.setCost(room.getCost());
+            roomReservationDto.setMode("Paypal");
+            // check day availabe for reserve it in thts room
+            ResponseEntity<Boolean> booleanResponseEntity = reservationServiceClient.checkRoomAvailability(roomReservationDto.getRoomNumber(), roomReservationDto.getDate());
+            roomAvailable = booleanResponseEntity.getBody();
+
+        }
+        if (roomAvailable) {
+
+            // room available , update reservation success -> update DB -> send message reservation_Created
+            Reservation reservation = new Reservation();
+            reservation.setGuestId(guestByEmail.getGuestId());
+            reservation.setRoomId(room.getRoomId());
+            reservation.setDate(roomReservationDto.getDate());
+            Reservation serviceClientReservation = reservationServiceClient.createReservation(reservation);
+
+            roomReservationDto.setReservationId(serviceClientReservation.getReservationId());
+
+            // send message created on kafka topic :
+            roomReservationEvent.setType("room-reservation-created");
+            roomReservationEvent.setRoomReservationDto(roomReservationDto);
+            roomReservationEventKafkaTemplate.send("room-reservation-created", roomReservationEvent);
+        } else {
+            // throw room not available
+            throw new BadReqeustException("Room Not Available For reservation ");
+
+        }
+
+
+    }
+
 }

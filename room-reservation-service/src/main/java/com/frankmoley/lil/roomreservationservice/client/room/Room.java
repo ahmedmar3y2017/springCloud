@@ -14,4 +14,5 @@ public class Room {
     private String Name;
     private String roomNumber;
     private String bedInfo;
+    private double cost;
 }

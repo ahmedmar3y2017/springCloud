@@ -25,4 +25,6 @@ public class ReservationEntity {
     private long guestId;
     @Column(name = "RES_DATE")
     private Date date;
+    @Column(name = "STATUS")
+    private String status;
 }

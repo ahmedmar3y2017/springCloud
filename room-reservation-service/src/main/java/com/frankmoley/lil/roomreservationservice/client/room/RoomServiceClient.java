@@ -11,7 +11,7 @@ import java.util.Arrays;
 import java.util.List;
 
 //@Service
-@FeignClient(value = "room-service" , fallback = RoomServiceClientFallBack.class)
+@FeignClient(value = "room-service", fallback = RoomServiceClientFallBack.class)
 public interface RoomServiceClient {
 
     @GetMapping("/rooms")
@@ -21,8 +21,7 @@ public interface RoomServiceClient {
     public Room addRoom(@RequestBody Room room);
 
     @GetMapping("/rooms/{id}")
-
-    public Room getRoom(@PathVariable("id")  long id);
+    public Room getRoom(@PathVariable("id") long id);
 
     @PutMapping("/rooms/{id}")
     public void updateRoom(@PathVariable("id") long id, @RequestBody Room room);

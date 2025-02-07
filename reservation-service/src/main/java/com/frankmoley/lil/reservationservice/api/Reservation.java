@@ -22,6 +22,7 @@ public class Reservation {
     private long roomId;
     private long guestId;
     private String date;
+    private String status;
 
     public Reservation(ReservationEntity entity) {
         super();
@@ -42,6 +43,7 @@ public class Reservation {
         DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
         Date date = dateFormat.parse(this.date);
         entity.setDate(new java.sql.Date(date.getTime()));
+        entity.setStatus(this.getStatus());
         return entity;
     }
 }

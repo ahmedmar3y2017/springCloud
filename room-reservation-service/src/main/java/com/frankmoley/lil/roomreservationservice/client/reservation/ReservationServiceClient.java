@@ -1,5 +1,6 @@
 package com.frankmoley.lil.roomreservationservice.client.reservation;
 
+import com.frankmoley.lil.roomreservationservice.client.room.RoomServiceClientFallBack;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.http.HttpStatus;
@@ -16,13 +17,18 @@ import java.util.List;
 import java.util.Map;
 
 //@Service
-@FeignClient("reservation-service")
+@FeignClient(value = "reservation-service" , fallback = ReservationClientFallBack.class)
 public interface ReservationServiceClient {
 
 
     @GetMapping("/reservations")
     public List<Reservation> getAll(@RequestParam(value = "guestId", required = false) Long guestId,
                                     @RequestParam(value = "date", required = false) String dateString
+    );
+
+    @GetMapping("/reservations/available")
+    public ResponseEntity<Boolean> checkRoomAvailability(@RequestParam(value = "roomId", required = true) Long roomId,
+                                    @RequestParam(value = "date", required = true) String dateString
     );
 
     @PostMapping("/reservations")

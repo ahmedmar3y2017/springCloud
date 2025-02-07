@@ -15,4 +15,6 @@ public class Reservation {
     private long roomId;
     private long guestId;
     private String date;
+    private String status;
+
 }
