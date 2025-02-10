@@ -85,6 +85,7 @@ public class RoomReservationController {
 
     @PostMapping
     public void addRoomReservation(
+            @RequestHeader("UUID_") String UUID ,
             @RequestBody RoomReservationDto roomReservationDto
     ) {
         RoomReservationEvent roomReservationEvent = new RoomReservationEvent();
