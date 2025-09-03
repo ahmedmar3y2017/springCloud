@@ -24,7 +24,7 @@ public interface GuestServiceClient {
     @GetMapping("/guests/{id}")
     public Guest getGuest(@PathVariable("id") long id);
 
-    @GetMapping("/guests/{email}")
+    @GetMapping("/guests/email/{email}")
     public Guest getGuestByEmail(@PathVariable("email") String email);
 
     @PutMapping("/guests/{id}")

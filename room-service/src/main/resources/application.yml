@@ -1,0 +1,11 @@
+spring:
+  application:
+    name: room-service
+
+  # Config Server import
+  config:
+    import: optional:configserver:http://localhost:9095/config-server
+
+  # cloud:
+  #   config:
+  #     enabled: false

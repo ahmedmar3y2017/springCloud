@@ -1,0 +1,14 @@
+spring:
+  application:
+    name: room-reservation-service
+#  cloud:
+#    config:
+#      enabled: false
+#  cloud:
+#    openfeign:
+#      circuitbreaker:
+#        enabled: true
+  config:
+    import: optional:configserver:http://localhost:9095/config-server
+
+

@@ -10,10 +10,15 @@ import com.frankmoley.lil.roomreservationservice.dto.RoomReservationDto;
 import com.frankmoley.lil.roomreservationservice.dto.RoomReservationEvent;
 import com.frankmoley.lil.roomreservationservice.error.BadReqeustException;
 import com.frankmoley.lil.roomreservationservice.error.NotFoundException;
+import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.core.env.Environment;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.client.RestTemplate;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -27,16 +32,25 @@ public class RoomReservationController {
     private final ReservationServiceClient reservationServiceClient;
     private final RoomServiceClient roomServiceClient;
     private final KafkaTemplate<String, RoomReservationEvent> roomReservationEventKafkaTemplate;
+    private final RestTemplate restTemplate;
+    private final Environment environment;
 
-    public RoomReservationController(GuestServiceClient guestServiceClient, ReservationServiceClient reservationServiceClient, RoomServiceClient roomServiceClient, KafkaTemplate<String, RoomReservationEvent> roomReservationEventKafkaTemplate) {
+    public RoomReservationController(GuestServiceClient guestServiceClient, ReservationServiceClient reservationServiceClient, RoomServiceClient roomServiceClient, KafkaTemplate<String, RoomReservationEvent> roomReservationEventKafkaTemplate, RestTemplate restTemplate, Environment environment) {
         this.guestServiceClient = guestServiceClient;
         this.reservationServiceClient = reservationServiceClient;
         this.roomServiceClient = roomServiceClient;
         this.roomReservationEventKafkaTemplate = roomReservationEventKafkaTemplate;
+        this.restTemplate = restTemplate;
+        this.environment = environment;
     }
 
     @GetMapping
-    public Collection<RoomReservation> getRoomReservations(@RequestParam(required = false) String dateString) {
+    public Collection<RoomReservation> getRoomReservations(@RequestParam(required = false) String dateString
+    ) {
+        String instanceId = environment.getProperty("eureka.instance.instance-id");
+        String port = environment.getProperty("local.server.port");
+        System.out.println("Instance ID: " + instanceId + " | Port: " + port);
+
         if (!StringUtils.hasLength(dateString)) {
             Date date = new Date(System.currentTimeMillis());
             DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
@@ -44,7 +58,16 @@ public class RoomReservationController {
         }
         final String usableDateString = dateString;
         //get all rooms first
-        List<Room> rooms = this.roomServiceClient.getAll();
+//        List<Room> rooms = this.roomServiceClient.getAll();
+        ResponseEntity<List<Room>> response = restTemplate.exchange(
+                "http://room-service/rooms",
+                HttpMethod.GET,
+                null,
+                new ParameterizedTypeReference<List<Room>>() {
+                }
+        );
+        List<Room> rooms = response.getBody();
+
         //now build a room reservation for each one
         Map<Long, RoomReservation> roomReservations = new HashMap<>(rooms.size());
         rooms.forEach(room -> {
@@ -56,12 +79,25 @@ public class RoomReservationController {
             roomReservation.setDate(usableDateString);
             roomReservations.put(room.getRoomId(), roomReservation);
         });
-        List<Reservation> reservations = this.reservationServiceClient.getAll(null, usableDateString);
+//        List<Reservation> reservations = this.reservationServiceClient.getAll(null, usableDateString);
+
+        ResponseEntity<List<Reservation>> responseReservations = restTemplate.exchange(
+                "http://reservation-service/reservations",
+                HttpMethod.GET,
+                null,
+                new ParameterizedTypeReference<List<Reservation>>() {
+                }
+        );
+        List<Reservation> reservations = responseReservations.getBody();
+
         reservations.forEach(reservation -> {
             RoomReservation roomReservation = roomReservations.get(reservation.getRoomId());
             roomReservation.setReservationId(reservation.getReservationId());
             roomReservation.setGuestId(reservation.getGuestId());
-            Guest guest = this.guestServiceClient.getGuest(roomReservation.getGuestId());
+//            Guest guest = this.guestServiceClient.getGuest(roomReservation.getGuestId());
+
+            Guest guest = restTemplate.getForObject("http://guest-service/guests/" + roomReservation.getGuestId(), Guest.class);
+
             roomReservation.setFirstName(guest.getFirstName());
             roomReservation.setLastName(guest.getLastName());
         });
@@ -85,7 +121,7 @@ public class RoomReservationController {
 
     @PostMapping
     public void addRoomReservation(
-            @RequestHeader("UUID_") String UUID ,
+            @RequestHeader("UUID_") String UUID,
             @RequestBody RoomReservationDto roomReservationDto
     ) {
         RoomReservationEvent roomReservationEvent = new RoomReservationEvent();

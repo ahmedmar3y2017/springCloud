@@ -51,7 +51,7 @@ public class GuestController {
         return guest.get();
     }
 
-    @GetMapping("/{email}")
+    @GetMapping("/email/{email}")
     public ResponseEntity<Guest> getGuestByEmail(@PathVariable(value = "email", required = true) String emailAddress) {
         if (StringUtils.hasLength(emailAddress)) {
             Optional<Guest> guestsByEmailAddress = this.guestRepository.findGuestsByEmailAddress(emailAddress);
