@@ -11,6 +11,11 @@ import com.frankmoley.lil.roomreservationservice.dto.RoomReservationEvent;
 import com.frankmoley.lil.roomreservationservice.error.BadReqeustException;
 import com.frankmoley.lil.roomreservationservice.error.NotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cloud.client.ServiceInstance;
+import org.springframework.cloud.loadbalancer.core.ReactorServiceInstanceLoadBalancer;
+import org.springframework.cloud.loadbalancer.support.LoadBalancerClientFactory;
+import org.springframework.cloud.netflix.eureka.EurekaDiscoveryClient;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.core.env.Environment;
 import org.springframework.http.HttpMethod;
@@ -32,16 +37,23 @@ public class RoomReservationController {
     private final ReservationServiceClient reservationServiceClient;
     private final RoomServiceClient roomServiceClient;
     private final KafkaTemplate<String, RoomReservationEvent> roomReservationEventKafkaTemplate;
-    private final RestTemplate restTemplate;
+//    private final RestTemplate restTemplate;
     private final Environment environment;
+    private final EurekaDiscoveryClient discoveryClient;
+    private final LoadBalancerClientFactory loadBalancerClientFactory;
 
-    public RoomReservationController(GuestServiceClient guestServiceClient, ReservationServiceClient reservationServiceClient, RoomServiceClient roomServiceClient, KafkaTemplate<String, RoomReservationEvent> roomReservationEventKafkaTemplate, RestTemplate restTemplate, Environment environment) {
+    @Value("${spring.application.name}")
+    String applicationName;
+
+    public RoomReservationController(GuestServiceClient guestServiceClient, ReservationServiceClient reservationServiceClient, RoomServiceClient roomServiceClient, KafkaTemplate<String, RoomReservationEvent> roomReservationEventKafkaTemplate, Environment environment, EurekaDiscoveryClient discoveryClient, LoadBalancerClientFactory loadBalancerClientFactory) {
         this.guestServiceClient = guestServiceClient;
         this.reservationServiceClient = reservationServiceClient;
         this.roomServiceClient = roomServiceClient;
         this.roomReservationEventKafkaTemplate = roomReservationEventKafkaTemplate;
-        this.restTemplate = restTemplate;
+//        this.restTemplate = restTemplate;
         this.environment = environment;
+        this.discoveryClient = discoveryClient;
+        this.loadBalancerClientFactory = loadBalancerClientFactory;
     }
 
     @GetMapping
@@ -50,6 +62,16 @@ public class RoomReservationController {
         String instanceId = environment.getProperty("eureka.instance.instance-id");
         String port = environment.getProperty("local.server.port");
         System.out.println("Instance ID: " + instanceId + " | Port: " + port);
+//        ReactorServiceInstanceLoadBalancer lb =
+//                loadBalancerClientFactory.getInstance(instanceId, ReactorServiceInstanceLoadBalancer.class);
+//        System.out.println("Service " + instanceId + " is using " + lb.getClass().getSimpleName());
+
+//        System.out.println("List of instances : " + applicationName);
+//        List<ServiceInstance> instances = discoveryClient.getInstances(applicationName);
+//        instances.stream().forEach(serviceInstance -> {
+//
+//            System.out.println("Instance ID: " + serviceInstance.getInstanceId() + " | Port: " + serviceInstance.getPort());
+//        } );
 
         if (!StringUtils.hasLength(dateString)) {
             Date date = new Date(System.currentTimeMillis());
@@ -57,16 +79,16 @@ public class RoomReservationController {
             dateString = dateFormat.format(date);
         }
         final String usableDateString = dateString;
-        //get all rooms first
-//        List<Room> rooms = this.roomServiceClient.getAll();
-        ResponseEntity<List<Room>> response = restTemplate.exchange(
-                "http://room-service/rooms",
-                HttpMethod.GET,
-                null,
-                new ParameterizedTypeReference<List<Room>>() {
-                }
-        );
-        List<Room> rooms = response.getBody();
+        //get all rooms first - openFien lib
+        List<Room> rooms = this.roomServiceClient.getAll();
+//        ResponseEntity<List<Room>> response = restTemplate.exchange(
+//                "http://room-service/rooms",
+//                HttpMethod.GET,
+//                null,
+//                new ParameterizedTypeReference<List<Room>>() {
+//                }
+//        );
+//        List<Room> rooms = response.getBody();
 
         //now build a room reservation for each one
         Map<Long, RoomReservation> roomReservations = new HashMap<>(rooms.size());
@@ -79,24 +101,26 @@ public class RoomReservationController {
             roomReservation.setDate(usableDateString);
             roomReservations.put(room.getRoomId(), roomReservation);
         });
-//        List<Reservation> reservations = this.reservationServiceClient.getAll(null, usableDateString);
+        // - openFien lib
+        List<Reservation> reservations = this.reservationServiceClient.getAll(null, usableDateString);
 
-        ResponseEntity<List<Reservation>> responseReservations = restTemplate.exchange(
-                "http://reservation-service/reservations",
-                HttpMethod.GET,
-                null,
-                new ParameterizedTypeReference<List<Reservation>>() {
-                }
-        );
-        List<Reservation> reservations = responseReservations.getBody();
+//        ResponseEntity<List<Reservation>> responseReservations = restTemplate.exchange(
+//                "http://reservation-service/reservations",
+//                HttpMethod.GET,
+//                null,
+//                new ParameterizedTypeReference<List<Reservation>>() {
+//                }
+//        );
+//        List<Reservation> reservations = responseReservations.getBody();
 
         reservations.forEach(reservation -> {
             RoomReservation roomReservation = roomReservations.get(reservation.getRoomId());
             roomReservation.setReservationId(reservation.getReservationId());
             roomReservation.setGuestId(reservation.getGuestId());
-//            Guest guest = this.guestServiceClient.getGuest(roomReservation.getGuestId());
+            // - openFien lib
+            Guest guest = this.guestServiceClient.getGuest(roomReservation.getGuestId());
 
-            Guest guest = restTemplate.getForObject("http://guest-service/guests/" + roomReservation.getGuestId(), Guest.class);
+//            Guest guest = restTemplate.getForObject("http://guest-service/guests/" + roomReservation.getGuestId(), Guest.class);
 
             roomReservation.setFirstName(guest.getFirstName());
             roomReservation.setLastName(guest.getLastName());

@@ -9,6 +9,7 @@ spring:
 #      circuitbreaker:
 #        enabled: true
   config:
-    import: optional:configserver:http://localhost:9095/config-server
+    import: optional:configserver:http://localhost:8088 # through direct config server
+#    import: optional:configserver:http://localhost:9095/config-server # through api gateway
 
 

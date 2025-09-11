@@ -4,6 +4,9 @@ import com.frankmoley.lil.guestservice.data.Guest;
 import com.frankmoley.lil.guestservice.data.GuestRepository;
 import com.frankmoley.lil.guestservice.error.BadReqeustException;
 import com.frankmoley.lil.guestservice.error.NotFoundException;
+import org.springframework.cloud.loadbalancer.core.ReactorServiceInstanceLoadBalancer;
+import org.springframework.cloud.loadbalancer.support.LoadBalancerClientFactory;
+import org.springframework.core.env.Environment;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.StringUtils;
@@ -18,9 +21,13 @@ import static org.springframework.data.jpa.domain.AbstractPersistable_.id;
 public class GuestController {
 
     private final GuestRepository guestRepository;
+    private final Environment environment;
+    private final LoadBalancerClientFactory loadBalancerClientFactory;
 
-    public GuestController(GuestRepository guestRepository) {
+    public GuestController(GuestRepository guestRepository, Environment environment, LoadBalancerClientFactory loadBalancerClientFactory) {
         this.guestRepository = guestRepository;
+        this.environment = environment;
+        this.loadBalancerClientFactory = loadBalancerClientFactory;
     }
 
 
@@ -44,6 +51,12 @@ public class GuestController {
 
     @GetMapping("/{id}")
     public Guest getGuest(@PathVariable("id") Long id) {
+        String instanceId = environment.getProperty("eureka.instance.instance-id");
+        String port = environment.getProperty("local.server.port");
+        System.out.println("Instance ID: " + instanceId + " | Port: " + port);
+        ReactorServiceInstanceLoadBalancer lb =
+                loadBalancerClientFactory.getInstance(instanceId, ReactorServiceInstanceLoadBalancer.class);
+        System.out.println("Service " + instanceId + " is using " + lb.getClass().getSimpleName());
         Optional<Guest> guest = this.guestRepository.findById(id);
         if (guest.isEmpty()) {
             throw new NotFoundException("id not found: " + id);
