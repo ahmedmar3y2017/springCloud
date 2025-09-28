@@ -21,7 +21,6 @@ import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.core.env.Environment;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
-import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestTemplate;
@@ -38,7 +37,6 @@ public class RoomReservationController {
     private final GuestServiceClient guestServiceClient;
     private final ReservationServiceClient reservationServiceClient;
     private final RoomServiceClient roomServiceClient;
-    private final KafkaTemplate<String, RoomReservationEvent> roomReservationEventKafkaTemplate;
 //    private final RestTemplate restTemplate;
     private final Environment environment;
     private final EurekaDiscoveryClient discoveryClient;
@@ -52,11 +50,10 @@ public class RoomReservationController {
     @Value("${spring.application.name}")
     String applicationName;
 
-    public RoomReservationController(GuestServiceClient guestServiceClient, ReservationServiceClient reservationServiceClient, RoomServiceClient roomServiceClient, KafkaTemplate<String, RoomReservationEvent> roomReservationEventKafkaTemplate, Environment environment, EurekaDiscoveryClient discoveryClient, LoadBalancerClientFactory loadBalancerClientFactory) {
+    public RoomReservationController(GuestServiceClient guestServiceClient, ReservationServiceClient reservationServiceClient, RoomServiceClient roomServiceClient, Environment environment, EurekaDiscoveryClient discoveryClient, LoadBalancerClientFactory loadBalancerClientFactory) {
         this.guestServiceClient = guestServiceClient;
         this.reservationServiceClient = reservationServiceClient;
         this.roomServiceClient = roomServiceClient;
-        this.roomReservationEventKafkaTemplate = roomReservationEventKafkaTemplate;
 //        this.restTemplate = restTemplate;
         this.environment = environment;
         this.discoveryClient = discoveryClient;
@@ -213,8 +210,8 @@ public class RoomReservationController {
             // send message created on kafka topic :
             roomReservationEvent.setType("room-reservation-created");
             roomReservationEvent.setRoomReservationDto(roomReservationDto);
-            roomReservationEventKafkaTemplate.send("room-reservation-created", roomReservationEvent);
-        } else {
+//            roomReservationEventKafkaTemplate.send("room-reservation-created", roomReservationEvent);
+//        } else {
             // throw room not available
             throw new BadReqeustException("Room Not Available For reservation ");
 
