@@ -10,6 +10,17 @@ spring:
           clone-on-start: true
         default-label: main
 
+    bus:
+      enabled: true
+    stream:
+      kafka:
+        binder:
+          auto-add-partitions: true
+#    refresh:
+#      additional-property-sources-to-retain:
+  kafka:
+    bootstrap-servers: localhost:19092 , localhost:19093 , localhost:19094
+
 server:
   port: 8088
 eureka:
@@ -25,7 +36,7 @@ management:
   endpoints:
     web:
       exposure:
-        include: refresh,health,info
+        include: "*"
 
 encrypt:
   key: MySecretEncryptKey123   # for demo only, keep strong & secure in prod
