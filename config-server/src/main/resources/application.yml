@@ -19,3 +19,14 @@ eureka:
   client:
     service-url:
       defaultZone: http://localhost:8761/eureka/
+
+#      *** auto refresh config
+management:
+  endpoints:
+    web:
+      exposure:
+        include: refresh,health,info
+
+encrypt:
+  key: MySecretEncryptKey123   # for demo only, keep strong & secure in prod
+

@@ -13,6 +13,7 @@ import com.frankmoley.lil.roomreservationservice.error.NotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.client.ServiceInstance;
+import org.springframework.cloud.context.config.annotation.RefreshScope;
 import org.springframework.cloud.loadbalancer.core.ReactorServiceInstanceLoadBalancer;
 import org.springframework.cloud.loadbalancer.support.LoadBalancerClientFactory;
 import org.springframework.cloud.netflix.eureka.EurekaDiscoveryClient;
@@ -31,6 +32,7 @@ import java.util.*;
 
 @RestController
 @RequestMapping("roomReservations")
+@RefreshScope
 public class RoomReservationController {
 
     private final GuestServiceClient guestServiceClient;
@@ -41,6 +43,11 @@ public class RoomReservationController {
     private final Environment environment;
     private final EurekaDiscoveryClient discoveryClient;
     private final LoadBalancerClientFactory loadBalancerClientFactory;
+
+
+
+    @Value("${refresh.test}")
+    String test;
 
     @Value("${spring.application.name}")
     String applicationName;
@@ -215,5 +222,13 @@ public class RoomReservationController {
 
 
     }
+
+
+    @GetMapping("/test/refresh")
+    public String getTest() {
+
+        return test;
+    }
+
 
 }
