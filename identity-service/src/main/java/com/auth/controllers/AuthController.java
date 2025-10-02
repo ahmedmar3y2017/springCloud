@@ -1,4 +1,4 @@
-package com.auth.rest;
+package com.auth.controllers;
 
 
 import com.auth.domains.User;
@@ -10,6 +10,8 @@ import com.auth.security.UserDetails;
 import com.auth.util.JwtUtil;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cloud.context.config.annotation.RefreshScope;
 import org.springframework.http.*;
 import org.springframework.security.authentication.*;
 import org.springframework.security.core.Authentication;
@@ -19,7 +21,14 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/auth")
 @RequiredArgsConstructor
+@RefreshScope
+
 public class AuthController {
+
+
+    @Value("${refresh.test}")
+    String test;
+
 
     private final AuthenticationManager authenticationManager;
     private final JwtUtil jwtUtil;
@@ -28,6 +37,7 @@ public class AuthController {
 
     @PostMapping("/token")
     public ResponseEntity<AuthResponse> login(@Valid @RequestBody AuthRequest request) {
+        System.out.println("************* refresh test **************" + test);
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword())
         );

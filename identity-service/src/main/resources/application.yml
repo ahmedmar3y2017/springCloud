@@ -1,21 +1,9 @@
 
 
 spring:
-  profiles:
-    active: dev
-  main:
-    web-application-type: servlet
   application:
     name: identity-service
-server:
-  port: 9090
+  config:
+    import: optional:configserver:http://localhost:8088 # through direct config server
 
-app:
-  jwt:
-    # A base64-encoded 256-bit secret (generate one and paste)
-    secret: "bXlfc2VjcmV0X2tleV90aGF0X2lzX2xvbmdlX2Vub3VnaA=="
-    expiration-ms: 3600000
 
-springdoc:
-  api-docs:
-    path: /api-docs
