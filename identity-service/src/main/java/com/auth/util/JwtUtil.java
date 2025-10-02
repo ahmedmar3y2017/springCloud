@@ -1,6 +1,7 @@
 package com.auth.util;
 
 import com.auth.security.UserDetails;
+import com.auth.services.UserDetailsService;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
@@ -15,11 +16,13 @@ public class JwtUtil {
 
     private final Key key;
     private final long jwtExpirationMs;
+    private final UserDetailsService userDetailsService;
 
     public JwtUtil(@Value("${app.jwt.secret}") String secret,
-                   @Value("${app.jwt.expiration-ms:3600000}") long jwtExpirationMs) {
+                   @Value("${app.jwt.expiration-ms:3600000}") long jwtExpirationMs, UserDetailsService userDetailsService) {
         this.key = Keys.hmacShaKeyFor(Base64.getDecoder().decode(secret));
         this.jwtExpirationMs = jwtExpirationMs;
+        this.userDetailsService = userDetailsService;
     }
 
     public String generateToken(UserDetails userDetails) {
@@ -37,6 +40,11 @@ public class JwtUtil {
 
     public boolean validateToken(String token, org.springframework.security.core.userdetails.UserDetails userDetails) {
         final String username = extractUsername(token);
+        return (username.equals(userDetails.getUsername()) && !isTokenExpired(token));
+    }
+    public boolean validateTokenAPI(String token) {
+        final String username = extractUsername(token);
+        org.springframework.security.core.userdetails.UserDetails userDetails = userDetailsService.loadUserByUsername(username);
         return (username.equals(userDetails.getUsername()) && !isTokenExpired(token));
     }
 

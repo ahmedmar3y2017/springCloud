@@ -26,7 +26,7 @@ public class AuthController {
     private final UserRepository userRepository;
     private final BCryptPasswordEncoder passwordEncoder;
 
-    @PostMapping("/login")
+    @PostMapping("/token")
     public ResponseEntity<AuthResponse> login(@Valid @RequestBody AuthRequest request) {
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword())
@@ -37,7 +37,7 @@ public class AuthController {
         return ResponseEntity.ok(new AuthResponse(token));
     }
 
-    @PostMapping("/signup")
+    @PostMapping("/register")
     public ResponseEntity<?> signup(@Valid @RequestBody SignupRequest req) {
         if (userRepository.existsByUsername(req.getUsername())) {
             return ResponseEntity.status(HttpStatus.CONFLICT).body("Username already exists");
@@ -59,5 +59,12 @@ public class AuthController {
 
         User saved = userRepository.save(user);
         return ResponseEntity.status(HttpStatus.CREATED).body("User created: " + saved.getUserId());
+    }
+
+    @GetMapping("/validate")
+    public boolean validate(@RequestParam("token") String token) {
+
+        return jwtUtil.validateTokenAPI(token);
+
     }
 }
